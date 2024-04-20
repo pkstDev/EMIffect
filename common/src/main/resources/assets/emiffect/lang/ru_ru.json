@@ -94,8 +94,8 @@
 
   "effect.farmersrespite.caffeinated.description": "Увеличивает скорость ходьбы и атаки.",
   
-	"effect.hordes.infected.description": "Убивает игрока, превращая его в зомби по истечении времени действия.",
-	"effect.hordes.immunity.description": "Даёт защиту от зомби-инфекции.",
+  "effect.hordes.infected.description": "Убивает игрока, превращая его в зомби по истечении четырёх стадий заражения.",
+  "effect.hordes.immunity.description": "Даёт защиту от зомби-инфекции.",
 
   "effect.mutantmonsters.chemical_x.description": "С шансом в 50% превращает сущность в мутанта. Взрывает, нанося 25 единиц урона, в противном случае или если превращение невозможно.",
 
@@ -104,11 +104,11 @@
 
   "effect.savage_and_ravage.weigth.description": "Делает цель очень тяжелой.",
 
-  "effect.sculk_horde.sculk_infected.description": "Скалковое заражение клещом в теле носителя. Приводит к распространению скалковой орды на близлежащие блоки.",
-  "effect.sculk_horde.sculk_lure.description": "Позволяет скалковому мозгу отслеживать вас с большого расстояния. Можно снять, используя колбу для очистки.",
-  "effect.sculk_horde.purity.description": "Жизненно важный эффект, не позволяющий сущностям получать эффекты зарытый и приманка. Его можно получить, бросив в себя колбу для очистки.",
-  "effect.sculk_horde.diseased_cysts.description": "Наносит урон и заражает других существ, находящихся рядом с изначальной жертвой. Можно снять, используя колбу для очистки.",
-  "effect.sculk_horde.sculk_vessel.description": "В разработке",
+  "effect.sculkhorde.sculk_infected.description": "Скалковое заражение клещом в теле носителя. Приводит к распространению скалковой орды на близлежащие блоки.",
+  "effect.sculkhorde.sculk_lure.description": "Позволяет скалковому мозгу отслеживать вас с большого расстояния. Можно снять, используя колбу для очистки.",
+  "effect.sculkhorde.purity.description": "Жизненно важный эффект, не позволяющий сущностям получать эффекты зарытый и приманка. Его можно получить, бросив в себя колбу для очистки.",
+  "effect.sculkhorde.diseased_cysts.description": "Наносит урон и заражает других существ, находящихся рядом с изначальной жертвой. Можно снять, используя колбу для очистки.",
+  "effect.sculkhorde.sculk_vessel.description": "В разработке",
 
   "effect.twilightforest.frosted.description": "Ты находишься там, где тебе не положено быть… пока."
 }
