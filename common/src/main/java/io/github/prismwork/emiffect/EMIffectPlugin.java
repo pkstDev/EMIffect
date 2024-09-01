@@ -21,9 +21,9 @@ import net.minecraft.util.Identifier;
 @EmiEntrypoint
 public class EMIffectPlugin implements EmiPlugin {
     public static final String MOD_ID = "emiffect";
-    public static final Identifier CATEGORY_ICON = new Identifier(MOD_ID, "textures/gui/emi/icon.png");
+    public static final Identifier CATEGORY_ICON = Identifier.of(MOD_ID, "textures/gui/emi/icon.png");
     public static final EmiRecipeCategory CATEGORY
-            = new EmiRecipeCategory(new Identifier(MOD_ID, "status_effect_info"), new EmiTexture(CATEGORY_ICON, 0, 0, 16, 16, 16, 16, 16, 16));
+            = new EmiRecipeCategory(Identifier.of(MOD_ID, "status_effect_info"), new EmiTexture(CATEGORY_ICON, 0, 0, 16, 16, 16, 16, 16, 16));
 
     @Override
     public void register(EmiRegistry registry) {

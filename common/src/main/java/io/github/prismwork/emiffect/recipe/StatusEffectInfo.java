@@ -43,7 +43,7 @@ public class StatusEffectInfo implements EmiRecipe {
     private final StatusEffectEmiStack emiStack;
 
     public StatusEffectInfo(RegistryEntry<StatusEffect> effect, StatusEffectEmiStack emiStack) {
-        this.id = Registries.STATUS_EFFECT.getId(effect.value()) != null ? Registries.STATUS_EFFECT.getId(effect.value()) : new Identifier("emiffect", "missingno");
+        this.id = Registries.STATUS_EFFECT.getId(effect.value()) != null ? Registries.STATUS_EFFECT.getId(effect.value()) : Identifier.of("emiffect", "missingno");
         List<EmiIngredient> inputs0 = new ArrayList<>();
 
         for (RegistryEntry<Potion> potion : Registries.POTION.getIndexedEntries()) {
@@ -114,7 +114,7 @@ public class StatusEffectInfo implements EmiRecipe {
 
     @Override
     public @Nullable Identifier getId() {
-        return new Identifier("emiffect", "effects/"
+        return Identifier.of("emiffect", "effects/"
                 + id.getNamespace()
                 + "/" + id.getPath());
     }
