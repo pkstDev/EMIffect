@@ -13,8 +13,10 @@ import io.github.prismwork.emiffect.util.stack.StatusEffectEmiStack;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FlowerBlock;
+import net.minecraft.block.SuspiciousStewIngredient;
 import net.minecraft.block.entity.BeaconBlockEntity;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.resource.language.I18n;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.*;
@@ -22,6 +24,7 @@ import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionUtil;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.OrderedText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +43,7 @@ public class StatusEffectInfo implements EmiRecipe {
     public StatusEffectInfo(StatusEffect effect, StatusEffectEmiStack emiStack) {
         this.id = Registries.STATUS_EFFECT.getId(effect) != null ? Registries.STATUS_EFFECT.getId(effect) : new Identifier("emiffect", "missingno");
         List<EmiIngredient> inputs0 = new ArrayList<>();
+
         for (Potion potion : Registries.POTION) {
             for (StatusEffectInstance instance : potion.getEffects()) {
                 if (instance.getEffectType().equals(effect)) {
@@ -54,12 +58,16 @@ public class StatusEffectInfo implements EmiRecipe {
         for (Block block : Registries.BLOCK) {
             if (block instanceof FlowerBlock flower) {
                 ItemStack stew = new ItemStack(Items.SUSPICIOUS_STEW);
-                StatusEffect flowerEffect = flower.getEffectInStew();
-                if (flowerEffect.equals(effect)) {
-                    SuspiciousStewItem.addEffectToStew(stew, effect, 200);
-                    inputs0.add(EmiStack.of(stew));
-                    break;
+                List<SuspiciousStewIngredient.StewEffect> flowerEffects = flower.getStewEffects();
+                List<SuspiciousStewIngredient.StewEffect> finalFlowerEffects = new ArrayList<>();
+                for (SuspiciousStewIngredient.StewEffect flowerEffect : flowerEffects) {
+                    if (flowerEffect.effect().equals(effect)) {
+                        finalFlowerEffects.add(flowerEffect);
+                    }
                 }
+                SuspiciousStewItem.writeEffectsToStew(stew, finalFlowerEffects);
+                inputs0.add(EmiStack.of(stew));
+                break;
             }
         }
         for (Item item : Registries.ITEM) {
@@ -79,12 +87,16 @@ public class StatusEffectInfo implements EmiRecipe {
                 inputs0.add(EmiStack.of(Blocks.BEACON));
             }
         }
+
         this.inputs = inputs0;
-        this.desc = MinecraftClient.getInstance().textRenderer.wrapLines(EmiPort.translatable("effect." + id.getNamespace() + "." + id.getPath() + ".description"), 110);
+        String key1 = "effect." + id.getNamespace() + "." + id.getPath() + ".description";
+        String key2 = "effect." + id.getNamespace() + "." + id.getPath() + ".desc";
+        Text description = I18n.hasTranslation(key1) ? EmiPort.translatable(key1) : (I18n.hasTranslation(key2) ? EmiPort.translatable(key2) : EmiPort.translatable("emiffect.status_effect_info.missing"));
+        this.desc = MinecraftClient.getInstance().textRenderer.wrapLines(description, 110);
         this.inputStackRow = inputs.isEmpty() ? 0 : 1;
         int inputColumn = 0;
         for (EmiIngredient ignored : inputs) {
-            if (inputColumn >= 6) {
+            if (inputColumn >= 8) {
                 this.inputStackRow += 1;
                 inputColumn = 0;
             }
@@ -113,6 +125,11 @@ public class StatusEffectInfo implements EmiRecipe {
     @Override
     public List<EmiStack> getOutputs() {
         return List.of(emiStack);
+    }
+
+    @Override
+    public boolean supportsRecipeTree() {
+        return false;
     }
 
     @Override
@@ -151,15 +168,15 @@ public class StatusEffectInfo implements EmiRecipe {
         int inputRow = 0;
         int inputColumn = 0;
         for (EmiIngredient ingredient : inputs) {
-            widgets.addSlot(ingredient, 18 + (inputColumn * 18), descHeight + 4 + (inputRow * 18));
+            widgets.addSlot(ingredient, (inputColumn * 18), descHeight + 4 + (inputRow * 18));
             inputColumn += 1;
-            if (inputColumn >= 6) {
+            if (inputColumn >= 8) {
                 inputRow += 1;
                 inputColumn = 0;
             }
         }
 
-        SlotWidget effectSlot = new SlotWidget(emiStack, 3, (descHeight - 26) / 2).large(true);
+        SlotWidget effectSlot = new SlotWidget(emiStack, 2, 14).large(true);
         widgets.add(effectSlot);
     }
 }
