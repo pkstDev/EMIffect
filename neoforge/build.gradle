@@ -37,6 +37,11 @@ dependencies {
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive = false }
+
+    mappings loom.layered {
+        it.mappings("net.fabricmc:yarn:${rootProject.minecraft_version}+build.${rootProject.yarn_mappings}:v2")
+        it.mappings("dev.architectury:yarn-mappings-patch-neoforge:$project.yarn_mappings_patch_neoforge_version")
+    }
 }
 
 publishMods {
@@ -48,7 +53,7 @@ publishMods {
 processResources {
     inputs.property "version", project.version
 
-    filesMatching("META-INF/mods.toml") {
+    filesMatching("META-INF/neoforge.mods.toml") {
         expand "version": project.version
     }
 }

@@ -9,11 +9,13 @@ import dev.emi.emi.api.stack.EmiStack;
 import io.github.prismwork.emiffect.recipe.StatusEffectInfo;
 import io.github.prismwork.emiffect.util.stack.StatusEffectEmiStack;
 import net.minecraft.block.Blocks;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.FoodComponent;
 import net.minecraft.entity.effect.StatusEffect;
-import net.minecraft.item.FoodComponent;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.Identifier;
 
 @EmiEntrypoint
@@ -26,9 +28,7 @@ public class EMIffectPlugin implements EmiPlugin {
     @Override
     public void register(EmiRegistry registry) {
 
-        System.out.println("My plugin was called");
-
-        for (StatusEffect effect : Registries.STATUS_EFFECT) {
+        for (RegistryEntry<StatusEffect> effect : Registries.STATUS_EFFECT.getIndexedEntries()) {
             StatusEffectEmiStack stack = StatusEffectEmiStack.of(effect);
             registry.addRecipe(new StatusEffectInfo(effect, stack));
             registry.addEmiStack(stack);
@@ -42,9 +42,9 @@ public class EMIffectPlugin implements EmiPlugin {
         registry.addWorkstation(CATEGORY, EmiStack.of(Items.SUSPICIOUS_STEW));
 
         for (Item item : Registries.ITEM) {
-            FoodComponent food = item.getFoodComponent();
+            FoodComponent food = item.getDefaultStack().get(DataComponentTypes.FOOD);
             if (food != null) {
-                if (!food.getStatusEffects().isEmpty()) {
+                if (!food.effects().isEmpty()) {
                     registry.addWorkstation(CATEGORY, EmiStack.of(item));
                 }
             }

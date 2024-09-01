@@ -10,17 +10,18 @@ import net.minecraft.client.gui.tooltip.TooltipComponent;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.texture.StatusEffectSpriteManager;
-import net.minecraft.entity.attribute.AttributeModifierCreator;
-import net.minecraft.entity.attribute.EntityAttribute;
+import net.minecraft.component.ComponentChanges;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.AttributeModifiersComponent;
+import net.minecraft.component.type.PotionContentsComponent;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.potion.PotionUtil;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
@@ -29,17 +30,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StatusEffectEmiStack extends EmiStack {
     @Nullable
-    private final StatusEffect effect;
+    private final RegistryEntry<StatusEffect> effect;
 
-    protected StatusEffectEmiStack(@Nullable StatusEffect effect) {
+    protected StatusEffectEmiStack(@Nullable RegistryEntry<StatusEffect> effect) {
         this.effect = effect;
     }
 
-    public static StatusEffectEmiStack of(@Nullable StatusEffect effect) {
+    public static StatusEffectEmiStack of(@Nullable RegistryEntry<StatusEffect> effect) {
         return new StatusEffectEmiStack(effect);
     }
 
@@ -53,7 +55,7 @@ public class StatusEffectEmiStack extends EmiStack {
         return effect == null;
     }
 
-    public @Nullable StatusEffect getEffect() {
+    public @Nullable RegistryEntry<StatusEffect> getEffect() {
         return effect;
     }
 
@@ -71,8 +73,8 @@ public class StatusEffectEmiStack extends EmiStack {
     }
 
     @Override
-    public NbtCompound getNbt() {
-        return null;
+    public ComponentChanges getComponentChanges() {
+        return ComponentChanges.EMPTY;
     }
 
     @Override
@@ -82,7 +84,7 @@ public class StatusEffectEmiStack extends EmiStack {
 
     @Override
     public Identifier getId() {
-        return Registries.STATUS_EFFECT.getId(effect);
+        return Registries.STATUS_EFFECT.getId(effect.value());
     }
 
     @Override
@@ -94,7 +96,7 @@ public class StatusEffectEmiStack extends EmiStack {
     public List<TooltipComponent> getTooltip() {
         if (effect == null) return List.of();
         List<TooltipComponent> tooltips = new ArrayList<>(getTooltipText().stream().map(EmiPort::ordered).map(TooltipComponent::of).toList());
-        switch (effect.getCategory()) {
+        switch (effect.value().getCategory()) {
             case BENEFICIAL -> tooltips.add(TooltipComponent.of(EmiPort.ordered(
                     EmiPort.translatable("tooltip.emiffect.beneficial").formatted(Formatting.GREEN))));
             case NEUTRAL -> tooltips.add(TooltipComponent.of(EmiPort.ordered(
@@ -103,35 +105,35 @@ public class StatusEffectEmiStack extends EmiStack {
                     EmiPort.translatable("tooltip.emiffect.harmful").formatted(Formatting.RED))));
         }
         tooltips.add(TooltipComponent.of(EmiPort.ordered(
-                EmiPort.translatable("tooltip.emiffect.color", "#" + String.format("%02x", effect.getColor())).styled(style -> style.withColor(effect.getColor())))));
-        Identifier id = Registries.STATUS_EFFECT.getId(effect);
-        if (!effect.getAttributeModifiers().isEmpty()) {
-            tooltips.add(TooltipComponent.of(EmiPort.ordered(EmiPort.literal(""))));
-            tooltips.add(TooltipComponent.of(EmiPort.ordered(EmiPort.translatable("tooltip.emiffect.applied").formatted(Formatting.GRAY))));
-            for (Map.Entry<EntityAttribute, AttributeModifierCreator> entry: effect.getAttributeModifiers().entrySet()) {
-                System.out.println(entry);
-                EntityAttributeModifier entityAttributeModifier = entry.getValue().createAttributeModifier(0);
-                double d = entityAttributeModifier.getValue();
-                double e;
-                if (entityAttributeModifier.getOperation() != EntityAttributeModifier.Operation.MULTIPLY_BASE && entityAttributeModifier.getOperation() != EntityAttributeModifier.Operation.MULTIPLY_TOTAL) {
-                    if ((entry.getKey()).equals(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE)) {
-                        e = d * 10.0;
-                    } else {
-                        e = d;
-                    }
-                } else {
-                    e = d * 100.0;
-                }
-
-                if (d > 0.0) {
-                    tooltips.add(TooltipComponent.of(EmiPort.ordered((EmiPort.translatable("attribute.modifier.plus." + entityAttributeModifier.getOperation().getId(), ItemStack.MODIFIER_FORMAT.format(e), Text.translatable((entry.getKey()).getTranslationKey())).formatted(Formatting.BLUE).append(EmiPort.translatable("tooltip.emiffect.per_level").formatted(Formatting.BLUE))))));
-                } else if (d < 0.0) {
-                    e *= -1.0;
-                    tooltips.add(TooltipComponent.of(EmiPort.ordered((EmiPort.translatable("attribute.modifier.take." + entityAttributeModifier.getOperation().getId(), ItemStack.MODIFIER_FORMAT.format(e), Text.translatable((entry.getKey()).getTranslationKey())).formatted(Formatting.RED).append(EmiPort.translatable("tooltip.emiffect.per_level").formatted(Formatting.RED))))));
-                }
-
+                EmiPort.translatable("tooltip.emiffect.color", "#" + String.format("%02x", effect.value().getColor())).styled(style -> style.withColor(effect.value().getColor())))));
+        Identifier id = Registries.STATUS_EFFECT.getId(effect.value());
+        AtomicBoolean blankLine = new AtomicBoolean(false);
+        effect.value().forEachAttributeModifier(0, ((entityAttribute, entityAttributeModifier) -> {
+            if (!blankLine.get()) {
+                tooltips.add(TooltipComponent.of(EmiPort.ordered(EmiPort.literal(""))));
+                tooltips.add(TooltipComponent.of(EmiPort.ordered(EmiPort.translatable("tooltip.emiffect.applied").formatted(Formatting.GRAY))));
+                blankLine.set(true);
             }
-        }
+            double d = entityAttributeModifier.value();
+            double e;
+            if (entityAttributeModifier.operation() != EntityAttributeModifier.Operation.ADD_MULTIPLIED_BASE && entityAttributeModifier.operation() != EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL) {
+                if ((entityAttribute.getKeyOrValue()).equals(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE.getKeyOrValue())) {
+                    e = d * 10.0;
+                } else {
+                    e = d;
+                }
+            } else {
+                e = d * 100.0;
+            }
+
+            if (d > 0.0) {
+                tooltips.add(TooltipComponent.of(EmiPort.ordered((EmiPort.translatable("attribute.modifier.plus." + entityAttributeModifier.operation().getId(), AttributeModifiersComponent.DECIMAL_FORMAT.format(e), Text.translatable((entityAttribute.value()).getTranslationKey())).formatted(Formatting.BLUE).append(EmiPort.translatable("tooltip.emiffect.per_level").formatted(Formatting.BLUE))))));
+            } else if (d < 0.0) {
+                e *= -1.0;
+                tooltips.add(TooltipComponent.of(EmiPort.ordered((EmiPort.translatable("attribute.modifier.take." + entityAttributeModifier.operation().getId(), AttributeModifiersComponent.DECIMAL_FORMAT.format(e), Text.translatable((entityAttribute.value()).getTranslationKey())).formatted(Formatting.RED).append(EmiPort.translatable("tooltip.emiffect.per_level").formatted(Formatting.RED))))));
+            }
+
+        }));
         if (id != null)
             tooltips.add(TooltipComponent.of(EmiPort.ordered(EmiPort.literal(EmiUtil.getModName(id.getNamespace()), Formatting.BLUE, Formatting.ITALIC))));
         return tooltips;
@@ -139,15 +141,15 @@ public class StatusEffectEmiStack extends EmiStack {
 
     @Override
     public Text getName() {
-        return effect != null ? effect.getName() : EmiPort.literal("missingno");
+        return effect != null ? effect.value().getName() : EmiPort.literal("missingno");
     }
 
     @Override
     public ItemStack getItemStack() {
         ItemStack stack = super.getItemStack();
         if (effect != null) {
-            stack = PotionUtil.setCustomPotionEffects(Items.POTION.getDefaultStack(),
-                    Collections.singletonList(new StatusEffectInstance(effect, 600)));
+            stack = Items.POTION.getDefaultStack();
+            stack.set(DataComponentTypes.POTION_CONTENTS, new PotionContentsComponent(Optional.empty(), Optional.empty(), Collections.singletonList(new StatusEffectInstance(effect, 600))));
         }
         return stack;
     }

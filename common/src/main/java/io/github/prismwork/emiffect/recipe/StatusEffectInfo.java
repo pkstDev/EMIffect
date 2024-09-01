@@ -1,6 +1,5 @@
 package io.github.prismwork.emiffect.recipe;
 
-import com.mojang.datafixers.util.Pair;
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
@@ -13,16 +12,19 @@ import io.github.prismwork.emiffect.util.stack.StatusEffectEmiStack;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FlowerBlock;
-import net.minecraft.block.SuspiciousStewIngredient;
 import net.minecraft.block.entity.BeaconBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.resource.language.I18n;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.FoodComponent;
+import net.minecraft.component.type.PotionContentsComponent;
+import net.minecraft.component.type.SuspiciousStewEffectsComponent;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.*;
 import net.minecraft.potion.Potion;
-import net.minecraft.potion.PotionUtil;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -40,17 +42,17 @@ public class StatusEffectInfo implements EmiRecipe {
     private int inputStackRow;
     private final StatusEffectEmiStack emiStack;
 
-    public StatusEffectInfo(StatusEffect effect, StatusEffectEmiStack emiStack) {
-        this.id = Registries.STATUS_EFFECT.getId(effect) != null ? Registries.STATUS_EFFECT.getId(effect) : new Identifier("emiffect", "missingno");
+    public StatusEffectInfo(RegistryEntry<StatusEffect> effect, StatusEffectEmiStack emiStack) {
+        this.id = Registries.STATUS_EFFECT.getId(effect.value()) != null ? Registries.STATUS_EFFECT.getId(effect.value()) : new Identifier("emiffect", "missingno");
         List<EmiIngredient> inputs0 = new ArrayList<>();
 
-        for (Potion potion : Registries.POTION) {
-            for (StatusEffectInstance instance : potion.getEffects()) {
+        for (RegistryEntry<Potion> potion : Registries.POTION.getIndexedEntries()) {
+            for (StatusEffectInstance instance : potion.value().getEffects()) {
                 if (instance.getEffectType().equals(effect)) {
-                    inputs0.addAll(List.of(EmiStack.of(PotionUtil.setPotion(Items.POTION.getDefaultStack(), potion)),
-                            EmiStack.of(PotionUtil.setPotion(Items.SPLASH_POTION.getDefaultStack(), potion)),
-                            EmiStack.of(PotionUtil.setPotion(Items.LINGERING_POTION.getDefaultStack(), potion)),
-                            EmiStack.of(PotionUtil.setPotion(Items.TIPPED_ARROW.getDefaultStack(), potion))));
+                    inputs0.addAll(List.of(EmiStack.of(PotionContentsComponent.createStack(Items.POTION, potion)),
+                            EmiStack.of(PotionContentsComponent.createStack(Items.SPLASH_POTION, potion)),
+                            EmiStack.of(PotionContentsComponent.createStack(Items.LINGERING_POTION, potion)),
+                            EmiStack.of(PotionContentsComponent.createStack(Items.TIPPED_ARROW, potion))));
                     break;
                 }
             }
@@ -58,32 +60,32 @@ public class StatusEffectInfo implements EmiRecipe {
         for (Block block : Registries.BLOCK) {
             if (block instanceof FlowerBlock flower) {
                 ItemStack stew = new ItemStack(Items.SUSPICIOUS_STEW);
-                List<SuspiciousStewIngredient.StewEffect> flowerEffects = flower.getStewEffects();
-                List<SuspiciousStewIngredient.StewEffect> finalFlowerEffects = new ArrayList<>();
-                for (SuspiciousStewIngredient.StewEffect flowerEffect : flowerEffects) {
+                SuspiciousStewEffectsComponent flowerEffects = flower.getStewEffects();
+                List<SuspiciousStewEffectsComponent.StewEffect> finalFlowerEffects = new ArrayList<>();
+                for (SuspiciousStewEffectsComponent.StewEffect flowerEffect : flowerEffects.effects()) {
                     if (flowerEffect.effect().equals(effect)) {
                         finalFlowerEffects.add(flowerEffect);
                     }
                 }
-                SuspiciousStewItem.writeEffectsToStew(stew, finalFlowerEffects);
+                stew.set(DataComponentTypes.SUSPICIOUS_STEW_EFFECTS, new SuspiciousStewEffectsComponent(finalFlowerEffects));
                 inputs0.add(EmiStack.of(stew));
                 break;
             }
         }
         for (Item item : Registries.ITEM) {
-            FoodComponent food = item.getFoodComponent();
+            FoodComponent food = item.getDefaultStack().get(DataComponentTypes.FOOD);
             if (food != null) {
                 ItemStack stack = new ItemStack(item);
-                for (Pair<StatusEffectInstance, Float> pair : food.getStatusEffects()) {
-                    if (pair.getFirst().getEffectType().equals(effect)) {
+                for (FoodComponent.StatusEffectEntry entry : food.effects()) {
+                    if (entry.effect().getEffectType().equals(effect)) {
                         inputs0.add(EmiStack.of(stack));
                         break;
                     }
                 }
             }
         }
-        for (StatusEffect[] effects : BeaconBlockEntity.EFFECTS_BY_LEVEL) {
-            if (Arrays.asList(effects).contains(effect)) {
+        for (List<RegistryEntry<StatusEffect>> effects : BeaconBlockEntity.EFFECTS_BY_LEVEL) {
+            if (effects.contains(effect)) {
                 inputs0.add(EmiStack.of(Blocks.BEACON));
             }
         }
@@ -146,7 +148,7 @@ public class StatusEffectInfo implements EmiRecipe {
     public void addWidgets(WidgetHolder widgets) {
         int titleColor = 16777215;
         if (emiStack.getEffect() != null) {
-            switch (emiStack.getEffect().getCategory()) {
+            switch (emiStack.getEffect().value().getCategory()) {
                 case BENEFICIAL -> titleColor = Formatting.GREEN.getColorValue();
                 case NEUTRAL -> titleColor = Formatting.GOLD.getColorValue();
                 case HARMFUL -> titleColor = Formatting.RED.getColorValue();
