@@ -1,6 +1,5 @@
 package io.github.prismwork.emiffect.recipe;
 
-import com.mojang.datafixers.util.Pair;
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
@@ -15,13 +14,19 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.FlowerBlock;
 import net.minecraft.block.entity.BeaconBlockEntity;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.FoodComponent;
+import net.minecraft.component.type.PotionContentsComponent;
+import net.minecraft.component.type.SuspiciousStewEffectsComponent;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.*;
 import net.minecraft.potion.Potion;
-import net.minecraft.potion.PotionUtil;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.text.OrderedText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
@@ -37,16 +42,17 @@ public class StatusEffectInfo implements EmiRecipe {
     private int inputStackRow;
     private final StatusEffectEmiStack emiStack;
 
-    public StatusEffectInfo(StatusEffect effect, StatusEffectEmiStack emiStack) {
-        this.id = Registries.STATUS_EFFECT.getId(effect) != null ? Registries.STATUS_EFFECT.getId(effect) : new Identifier("emiffect", "missingno");
+    public StatusEffectInfo(RegistryEntry<StatusEffect> effect, StatusEffectEmiStack emiStack) {
+        this.id = Registries.STATUS_EFFECT.getId(effect.value()) != null ? Registries.STATUS_EFFECT.getId(effect.value()) : Identifier.of("emiffect", "missingno");
         List<EmiIngredient> inputs0 = new ArrayList<>();
-        for (Potion potion : Registries.POTION) {
-            for (StatusEffectInstance instance : potion.getEffects()) {
+
+        for (RegistryEntry<Potion> potion : Registries.POTION.getIndexedEntries()) {
+            for (StatusEffectInstance instance : potion.value().getEffects()) {
                 if (instance.getEffectType().equals(effect)) {
-                    inputs0.addAll(List.of(EmiStack.of(PotionUtil.setPotion(Items.POTION.getDefaultStack(), potion)),
-                            EmiStack.of(PotionUtil.setPotion(Items.SPLASH_POTION.getDefaultStack(), potion)),
-                            EmiStack.of(PotionUtil.setPotion(Items.LINGERING_POTION.getDefaultStack(), potion)),
-                            EmiStack.of(PotionUtil.setPotion(Items.TIPPED_ARROW.getDefaultStack(), potion))));
+                    inputs0.addAll(List.of(EmiStack.of(PotionContentsComponent.createStack(Items.POTION, potion)),
+                            EmiStack.of(PotionContentsComponent.createStack(Items.SPLASH_POTION, potion)),
+                            EmiStack.of(PotionContentsComponent.createStack(Items.LINGERING_POTION, potion)),
+                            EmiStack.of(PotionContentsComponent.createStack(Items.TIPPED_ARROW, potion))));
                     break;
                 }
             }
@@ -54,37 +60,45 @@ public class StatusEffectInfo implements EmiRecipe {
         for (Block block : Registries.BLOCK) {
             if (block instanceof FlowerBlock flower) {
                 ItemStack stew = new ItemStack(Items.SUSPICIOUS_STEW);
-                StatusEffect flowerEffect = flower.getEffectInStew();
-                if (flowerEffect.equals(effect)) {
-                    SuspiciousStewItem.addEffectToStew(stew, effect, 200);
-                    inputs0.add(EmiStack.of(stew));
-                    break;
+                SuspiciousStewEffectsComponent flowerEffects = flower.getStewEffects();
+                List<SuspiciousStewEffectsComponent.StewEffect> finalFlowerEffects = new ArrayList<>();
+                for (SuspiciousStewEffectsComponent.StewEffect flowerEffect : flowerEffects.effects()) {
+                    if (flowerEffect.effect().equals(effect)) {
+                        finalFlowerEffects.add(flowerEffect);
+                    }
                 }
+                stew.set(DataComponentTypes.SUSPICIOUS_STEW_EFFECTS, new SuspiciousStewEffectsComponent(finalFlowerEffects));
+                inputs0.add(EmiStack.of(stew));
+                break;
             }
         }
         for (Item item : Registries.ITEM) {
-            FoodComponent food = item.getFoodComponent();
+            FoodComponent food = item.getDefaultStack().get(DataComponentTypes.FOOD);
             if (food != null) {
                 ItemStack stack = new ItemStack(item);
-                for (Pair<StatusEffectInstance, Float> pair : food.getStatusEffects()) {
-                    if (pair.getFirst().getEffectType().equals(effect)) {
+                for (FoodComponent.StatusEffectEntry entry : food.effects()) {
+                    if (entry.effect().getEffectType().equals(effect)) {
                         inputs0.add(EmiStack.of(stack));
                         break;
                     }
                 }
             }
         }
-        for (StatusEffect[] effects : BeaconBlockEntity.EFFECTS_BY_LEVEL) {
-            if (Arrays.asList(effects).contains(effect)) {
+        for (List<RegistryEntry<StatusEffect>> effects : BeaconBlockEntity.EFFECTS_BY_LEVEL) {
+            if (effects.contains(effect)) {
                 inputs0.add(EmiStack.of(Blocks.BEACON));
             }
         }
+
         this.inputs = inputs0;
-        this.desc = MinecraftClient.getInstance().textRenderer.wrapLines(EmiPort.translatable("effect." + id.getNamespace() + "." + id.getPath() + ".description"), 110);
+        String key1 = "effect." + id.getNamespace() + "." + id.getPath() + ".description";
+        String key2 = "effect." + id.getNamespace() + "." + id.getPath() + ".desc";
+        Text description = I18n.hasTranslation(key1) ? EmiPort.translatable(key1) : (I18n.hasTranslation(key2) ? EmiPort.translatable(key2) : EmiPort.translatable("emiffect.status_effect_info.missing"));
+        this.desc = MinecraftClient.getInstance().textRenderer.wrapLines(description, 110);
         this.inputStackRow = inputs.isEmpty() ? 0 : 1;
         int inputColumn = 0;
         for (EmiIngredient ignored : inputs) {
-            if (inputColumn >= 6) {
+            if (inputColumn >= 8) {
                 this.inputStackRow += 1;
                 inputColumn = 0;
             }
@@ -100,7 +114,7 @@ public class StatusEffectInfo implements EmiRecipe {
 
     @Override
     public @Nullable Identifier getId() {
-        return new Identifier("emiffect", "effects/"
+        return Identifier.of("emiffect", "effects/"
                 + id.getNamespace()
                 + "/" + id.getPath());
     }
@@ -113,6 +127,11 @@ public class StatusEffectInfo implements EmiRecipe {
     @Override
     public List<EmiStack> getOutputs() {
         return List.of(emiStack);
+    }
+
+    @Override
+    public boolean supportsRecipeTree() {
+        return false;
     }
 
     @Override
@@ -129,7 +148,7 @@ public class StatusEffectInfo implements EmiRecipe {
     public void addWidgets(WidgetHolder widgets) {
         int titleColor = 16777215;
         if (emiStack.getEffect() != null) {
-            switch (emiStack.getEffect().getCategory()) {
+            switch (emiStack.getEffect().value().getCategory()) {
                 case BENEFICIAL -> titleColor = Formatting.GREEN.getColorValue();
                 case NEUTRAL -> titleColor = Formatting.GOLD.getColorValue();
                 case HARMFUL -> titleColor = Formatting.RED.getColorValue();
@@ -151,15 +170,15 @@ public class StatusEffectInfo implements EmiRecipe {
         int inputRow = 0;
         int inputColumn = 0;
         for (EmiIngredient ingredient : inputs) {
-            widgets.addSlot(ingredient, 18 + (inputColumn * 18), descHeight + 4 + (inputRow * 18));
+            widgets.addSlot(ingredient, (inputColumn * 18), descHeight + 4 + (inputRow * 18));
             inputColumn += 1;
-            if (inputColumn >= 6) {
+            if (inputColumn >= 8) {
                 inputRow += 1;
                 inputColumn = 0;
             }
         }
 
-        SlotWidget effectSlot = new SlotWidget(emiStack, 3, (descHeight - 26) / 2).large(true);
+        SlotWidget effectSlot = new SlotWidget(emiStack, 2, 14).large(true);
         widgets.add(effectSlot);
     }
 }
