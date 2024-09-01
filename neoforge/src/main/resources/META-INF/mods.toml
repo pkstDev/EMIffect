@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[47,)"
+loaderVersion = "[1,)"
 issueTrackerURL = "https://github.com/Prismwork/EMIffect/issues"
 license = "MIT"
 
@@ -14,22 +14,22 @@ EMI addon that appends status effects in EMI and provides information about each
 logoFile = "icon.png"
 
 [[dependencies.emiffect]]
-modId = "forge"
-mandatory = true
-versionRange = "[47,)"
+modId = "neoforge"
+type = "REQUIRED"
+versionRange = "[20.4.167,)"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.emiffect]]
 modId = "minecraft"
-mandatory = true
-versionRange = "[1.20.1,)"
+type = "REQUIRED"
+versionRange = "[1.20.4,)"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.emiffect]]
 modId = "emi"
-mandatory = true
+type = "REQUIRED"
 versionRange = "[1.0,)"
 ordering = "NONE"
 side = "CLIENT"

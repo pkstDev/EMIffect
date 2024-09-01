@@ -13,6 +13,7 @@ import io.github.prismwork.emiffect.util.stack.StatusEffectEmiStack;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FlowerBlock;
+import net.minecraft.block.SuspiciousStewIngredient;
 import net.minecraft.block.entity.BeaconBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.resource.language.I18n;
@@ -57,12 +58,16 @@ public class StatusEffectInfo implements EmiRecipe {
         for (Block block : Registries.BLOCK) {
             if (block instanceof FlowerBlock flower) {
                 ItemStack stew = new ItemStack(Items.SUSPICIOUS_STEW);
-                StatusEffect flowerEffect = flower.getEffectInStew();
-                if (flowerEffect.equals(effect)) {
-                    SuspiciousStewItem.addEffectToStew(stew, effect, 200);
-                    inputs0.add(EmiStack.of(stew));
-                    break;
+                List<SuspiciousStewIngredient.StewEffect> flowerEffects = flower.getStewEffects();
+                List<SuspiciousStewIngredient.StewEffect> finalFlowerEffects = new ArrayList<>();
+                for (SuspiciousStewIngredient.StewEffect flowerEffect : flowerEffects) {
+                    if (flowerEffect.effect().equals(effect)) {
+                        finalFlowerEffects.add(flowerEffect);
+                    }
                 }
+                SuspiciousStewItem.writeEffectsToStew(stew, finalFlowerEffects);
+                inputs0.add(EmiStack.of(stew));
+                break;
             }
         }
         for (Item item : Registries.ITEM) {

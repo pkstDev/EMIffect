@@ -25,17 +25,22 @@ public class EMIffectPlugin implements EmiPlugin {
 
     @Override
     public void register(EmiRegistry registry) {
+
+        System.out.println("My plugin was called");
+
         for (StatusEffect effect : Registries.STATUS_EFFECT) {
             StatusEffectEmiStack stack = StatusEffectEmiStack.of(effect);
             registry.addRecipe(new StatusEffectInfo(effect, stack));
             registry.addEmiStack(stack);
         }
+
         registry.addCategory(CATEGORY);
         registry.addWorkstation(CATEGORY, EmiStack.of(Blocks.BEACON));
         registry.addWorkstation(CATEGORY, EmiStack.of(Items.POTION));
         registry.addWorkstation(CATEGORY, EmiStack.of(Items.SPLASH_POTION));
         registry.addWorkstation(CATEGORY, EmiStack.of(Items.LINGERING_POTION));
         registry.addWorkstation(CATEGORY, EmiStack.of(Items.SUSPICIOUS_STEW));
+
         for (Item item : Registries.ITEM) {
             FoodComponent food = item.getFoodComponent();
             if (food != null) {
