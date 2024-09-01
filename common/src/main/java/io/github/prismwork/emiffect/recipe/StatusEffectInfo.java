@@ -15,6 +15,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.FlowerBlock;
 import net.minecraft.block.entity.BeaconBlockEntity;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.resource.language.I18n;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.*;
@@ -22,6 +23,7 @@ import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionUtil;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.OrderedText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +42,7 @@ public class StatusEffectInfo implements EmiRecipe {
     public StatusEffectInfo(StatusEffect effect, StatusEffectEmiStack emiStack) {
         this.id = Registries.STATUS_EFFECT.getId(effect) != null ? Registries.STATUS_EFFECT.getId(effect) : new Identifier("emiffect", "missingno");
         List<EmiIngredient> inputs0 = new ArrayList<>();
+
         for (Potion potion : Registries.POTION) {
             for (StatusEffectInstance instance : potion.getEffects()) {
                 if (instance.getEffectType().equals(effect)) {
@@ -79,8 +82,12 @@ public class StatusEffectInfo implements EmiRecipe {
                 inputs0.add(EmiStack.of(Blocks.BEACON));
             }
         }
+
         this.inputs = inputs0;
-        this.desc = MinecraftClient.getInstance().textRenderer.wrapLines(EmiPort.translatable("effect." + id.getNamespace() + "." + id.getPath() + ".description"), 110);
+        String key1 = "effect." + id.getNamespace() + "." + id.getPath() + ".description";
+        String key2 = "effect." + id.getNamespace() + "." + id.getPath() + ".desc";
+        Text description = I18n.hasTranslation(key1) ? EmiPort.translatable(key1) : (I18n.hasTranslation(key2) ? EmiPort.translatable(key2) : EmiPort.translatable("emiffect.status_effect_info.missing"));
+        this.desc = MinecraftClient.getInstance().textRenderer.wrapLines(description, 110);
         this.inputStackRow = inputs.isEmpty() ? 0 : 1;
         int inputColumn = 0;
         for (EmiIngredient ignored : inputs) {

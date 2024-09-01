@@ -1,6 +1,8 @@
 {
   "emi.category.emiffect.status_effect_info": "Status Effect Info",
 
+  "emiffect.status_effect_info.missing": "No description provided",
+
   "tooltip.emiffect.beneficial": "Beneficial",
   "tooltip.emiffect.neutral": "Neutral",
   "tooltip.emiffect.harmful": "Harmful",
