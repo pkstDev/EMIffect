@@ -10,10 +10,10 @@ import net.minecraft.client.gui.tooltip.TooltipComponent;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.texture.StatusEffectSpriteManager;
+import net.minecraft.entity.attribute.AttributeModifierCreator;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.effect.DamageModifierStatusEffect;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.ItemStack;
@@ -108,15 +108,10 @@ public class StatusEffectEmiStack extends EmiStack {
         if (!effect.getAttributeModifiers().isEmpty()) {
             tooltips.add(TooltipComponent.of(EmiPort.ordered(EmiPort.literal(""))));
             tooltips.add(TooltipComponent.of(EmiPort.ordered(EmiPort.translatable("tooltip.emiffect.applied").formatted(Formatting.GRAY))));
-            for (Map.Entry<EntityAttribute, EntityAttributeModifier> entry: effect.getAttributeModifiers().entrySet()) {
+            for (Map.Entry<EntityAttribute, AttributeModifierCreator> entry: effect.getAttributeModifiers().entrySet()) {
                 System.out.println(entry);
-                EntityAttributeModifier entityAttributeModifier = entry.getValue();
+                EntityAttributeModifier entityAttributeModifier = entry.getValue().createAttributeModifier(0);
                 double d = entityAttributeModifier.getValue();
-                boolean damage = false;
-                if (effect instanceof DamageModifierStatusEffect damageModifierStatusEffect) {
-                    damage = true;
-                    d = damageModifierStatusEffect.adjustModifierAmount(0, entityAttributeModifier);
-                }
                 double e;
                 if (entityAttributeModifier.getOperation() != EntityAttributeModifier.Operation.MULTIPLY_BASE && entityAttributeModifier.getOperation() != EntityAttributeModifier.Operation.MULTIPLY_TOTAL) {
                     if ((entry.getKey()).equals(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE)) {
@@ -128,21 +123,13 @@ public class StatusEffectEmiStack extends EmiStack {
                     e = d * 100.0;
                 }
 
-                if (damage) {
-                    if (d > 0.0) {
-                        tooltips.add(TooltipComponent.of(EmiPort.ordered((EmiPort.translatable("attribute.modifier.plus." + entityAttributeModifier.getOperation().getId(), ItemStack.MODIFIER_FORMAT.format(e), Text.translatable((entry.getKey()).getTranslationKey())).formatted(Formatting.BLUE).append(EmiPort.translatable("tooltip.emiffect.per_level").formatted(Formatting.BLUE))))));
-                    } else if (d < 0.0) {
-                        e *= -1.0;
-                        tooltips.add(TooltipComponent.of(EmiPort.ordered((EmiPort.translatable("attribute.modifier.take." + entityAttributeModifier.getOperation().getId(), ItemStack.MODIFIER_FORMAT.format(e), Text.translatable((entry.getKey()).getTranslationKey())).formatted(Formatting.RED).append(EmiPort.translatable("tooltip.emiffect.per_level").formatted(Formatting.RED))))));
-                    }
-                } else {
-                    if (d > 0.0) {
-                        tooltips.add(TooltipComponent.of(EmiPort.ordered((EmiPort.translatable("attribute.modifier.plus." + entityAttributeModifier.getOperation().getId(), ItemStack.MODIFIER_FORMAT.format(e), Text.translatable((entry.getKey()).getTranslationKey())).formatted(Formatting.BLUE)))));
-                    } else if (d < 0.0) {
-                        e *= -1.0;
-                        tooltips.add(TooltipComponent.of(EmiPort.ordered((EmiPort.translatable("attribute.modifier.take." + entityAttributeModifier.getOperation().getId(), ItemStack.MODIFIER_FORMAT.format(e), Text.translatable((entry.getKey()).getTranslationKey())).formatted(Formatting.RED)))));
-                    }
+                if (d > 0.0) {
+                    tooltips.add(TooltipComponent.of(EmiPort.ordered((EmiPort.translatable("attribute.modifier.plus." + entityAttributeModifier.getOperation().getId(), ItemStack.MODIFIER_FORMAT.format(e), Text.translatable((entry.getKey()).getTranslationKey())).formatted(Formatting.BLUE).append(EmiPort.translatable("tooltip.emiffect.per_level").formatted(Formatting.BLUE))))));
+                } else if (d < 0.0) {
+                    e *= -1.0;
+                    tooltips.add(TooltipComponent.of(EmiPort.ordered((EmiPort.translatable("attribute.modifier.take." + entityAttributeModifier.getOperation().getId(), ItemStack.MODIFIER_FORMAT.format(e), Text.translatable((entry.getKey()).getTranslationKey())).formatted(Formatting.RED).append(EmiPort.translatable("tooltip.emiffect.per_level").formatted(Formatting.RED))))));
                 }
+
             }
         }
         if (id != null)
