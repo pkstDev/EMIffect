@@ -26,8 +26,6 @@ public class EMIffectPlugin implements EmiPlugin {
     @Override
     public void register(EmiRegistry registry) {
 
-        System.out.println("My plugin was called");
-
         for (StatusEffect effect : Registries.STATUS_EFFECT) {
             StatusEffectEmiStack stack = StatusEffectEmiStack.of(effect);
             registry.addRecipe(new StatusEffectInfo(effect, stack));

@@ -109,7 +109,6 @@ public class StatusEffectEmiStack extends EmiStack {
             tooltips.add(TooltipComponent.of(EmiPort.ordered(EmiPort.literal(""))));
             tooltips.add(TooltipComponent.of(EmiPort.ordered(EmiPort.translatable("tooltip.emiffect.applied").formatted(Formatting.GRAY))));
             for (Map.Entry<EntityAttribute, AttributeModifierCreator> entry: effect.getAttributeModifiers().entrySet()) {
-                System.out.println(entry);
                 EntityAttributeModifier entityAttributeModifier = entry.getValue().createAttributeModifier(0);
                 double d = entityAttributeModifier.getValue();
                 double e;
