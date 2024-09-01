@@ -57,10 +57,10 @@ public class StatusEffectEmiStack extends EmiStack {
         StatusEffectSpriteManager sprites = MinecraftClient.getInstance().getStatusEffectSpriteManager();
         if (effect != null) {
             Sprite sprite = sprites.getSprite(effect);
-            RenderSystem.clearColor(1.0F, 1.0F,1.0F,1.0F);
+            RenderSystem.clearColor(1.0F, 1.0F, 1.0F, 1.0F);
             RenderSystem.setShader(GameRenderer::getPositionTexProgram);
             RenderSystem.setShaderTexture(0, sprite.getAtlasId());
-            draw.drawSprite(x, y, 0, 18, 18, sprite);
+            draw.drawSprite(x - 1, y - 1, 0, 18, 18, sprite);
             RenderSystem.applyModelViewMatrix();
         }
     }

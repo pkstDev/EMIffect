@@ -91,7 +91,7 @@ public class StatusEffectInfo implements EmiRecipe {
         this.inputStackRow = inputs.isEmpty() ? 0 : 1;
         int inputColumn = 0;
         for (EmiIngredient ignored : inputs) {
-            if (inputColumn >= 6) {
+            if (inputColumn >= 8) {
                 this.inputStackRow += 1;
                 inputColumn = 0;
             }
@@ -120,6 +120,11 @@ public class StatusEffectInfo implements EmiRecipe {
     @Override
     public List<EmiStack> getOutputs() {
         return List.of(emiStack);
+    }
+
+    @Override
+    public boolean supportsRecipeTree() {
+        return false;
     }
 
     @Override
@@ -158,15 +163,15 @@ public class StatusEffectInfo implements EmiRecipe {
         int inputRow = 0;
         int inputColumn = 0;
         for (EmiIngredient ingredient : inputs) {
-            widgets.addSlot(ingredient, 18 + (inputColumn * 18), descHeight + 4 + (inputRow * 18));
+            widgets.addSlot(ingredient, (inputColumn * 18), descHeight + 4 + (inputRow * 18));
             inputColumn += 1;
-            if (inputColumn >= 6) {
+            if (inputColumn >= 8) {
                 inputRow += 1;
                 inputColumn = 0;
             }
         }
 
-        SlotWidget effectSlot = new SlotWidget(emiStack, 3, (descHeight - 26) / 2).large(true);
+        SlotWidget effectSlot = new SlotWidget(emiStack, 2, 14).large(true);
         widgets.add(effectSlot);
     }
 }
